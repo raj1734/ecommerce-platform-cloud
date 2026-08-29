@@ -1,0 +1,22 @@
+spring:
+  data:
+    mongodb:
+      uri: mongodb://${MONGO_USERNAME}:${MONGO_PASSWORD}@${MONGO_HOST}:27017/catalog_db?tls=true&replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false
+      auto-index-creation: false
+    redis:
+      host: ${REDIS_HOST}
+      port: 6379
+      password: ${REDIS_PASSWORD}
+      ssl:
+        enabled: true
+  cache:
+    type: redis
+
+catalog:
+  repository:
+    type: mongo
+
+logging:
+  level:
+    root: INFO
+    com.ecommerce.catalog: INFO

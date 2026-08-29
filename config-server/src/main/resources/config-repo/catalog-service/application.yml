@@ -1,0 +1,14 @@
+server:
+  port: 8082
+
+catalog:
+  repository:
+    type: ${CATALOG_REPOSITORY_TYPE:memory}
+  cache:
+    type: ${CATALOG_CACHE_TYPE:memory}
+
+logging:
+  level:
+    root: DEBUG
+    com.ecommerce.auth: DEBUG
+    org.hibernate.SQL: DEBUG

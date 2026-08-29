@@ -1,0 +1,35 @@
+# Gateway Service - SIT Environment Configuration
+# System Integration Testing environment
+
+spring:
+  redis:
+    host: ${REDIS_HOST:sit-redis.example.com}
+    port: 6379
+    password: ${REDIS_PASSWORD:}
+  
+  cloud:
+    gateway:
+      routes:
+        - id: auth-service
+          uri: lb://auth-service
+          predicates:
+            - Path=/api/auth/**
+          filters:
+            - StripPrefix=1
+        - id: catalog-service
+          uri: lb://catalog-service
+          predicates:
+            - Path=/api/catalog/**
+          filters:
+            - StripPrefix=1
+        - id: order-service
+          uri: lb://order-service
+          predicates:
+            - Path=/api/orders/**
+          filters:
+            - StripPrefix=1
+
+logging:
+  level:
+    root: INFO
+    com.ecommerce.gateway: DEBUG

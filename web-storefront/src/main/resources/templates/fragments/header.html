@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<header th:fragment="header" class="border-bottom bg-white sticky-top">
+<nav class="navbar navbar-expand-lg">
+<div class="container">
+<a class="navbar-brand fw-bold text-primary" href="/products">E-Commerce</a>
+<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav"><span class="navbar-toggler-icon"></span></button>
+<div class="collapse navbar-collapse" id="nav">
+<ul class="navbar-nav me-auto mb-2 mb-lg-0">
+<li class="nav-item"><a class="nav-link" href="/products">Products</a></li>
+<li class="nav-item" th:if="${authenticated}"><a class="nav-link" href="/orders">Orders</a></li>
+<li class="nav-item" th:if="${isAdmin}"><a class="nav-link" href="/admin">Admin</a></li>
+</ul>
+<form class="d-flex me-3" method="get" action="/products">
+<input class="form-control form-control-sm" name="q" placeholder="Search products">
+</form>
+<a class="btn btn-outline-primary btn-sm me-2" th:if="${authenticated}" href="/cart"><i class="bi bi-cart"></i> Cart</a>
+<a class="btn btn-outline-secondary btn-sm me-2" th:if="${authenticated}" href="/account"><i class="bi bi-person"></i></a>
+<form th:if="${authenticated}" method="post" action="/logout">
+<button class="btn btn-dark btn-sm">Logout</button>
+</form>
+<a class="btn btn-primary btn-sm" th:if="${!authenticated}" href="/login">Login</a>
+</div></div></nav>
+</header>
+</body>
+</html>

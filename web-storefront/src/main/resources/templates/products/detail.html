@@ -1,0 +1,22 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org"><head th:replace="~{layout :: head('Product')}"></head>
+<body><div th:replace="~{fragments/header :: header}"></div>
+<main class="container py-5">
+<div class="row g-5">
+<div class="col-md-6"><div class="detail-image">
+<img th:if="${product.get('imageUrls') != null and product.get('imageUrls').isArray() and product.get('imageUrls').size() > 0}" th:src="${product.get('imageUrls').get(0).asText()}" alt="">
+<div th:unless="${product.get('imageUrls') != null and product.get('imageUrls').isArray() and product.get('imageUrls').size() > 0}" class="placeholder-image"><i class="bi bi-image"></i></div>
+</div></div>
+<div class="col-md-6">
+<div class="text-muted" th:text="${product.get('brand') != null ? product.get('brand').asText() : ''}"></div>
+<h1 class="fw-bold" th:text="${product.get('name') != null ? product.get('name').asText() : 'Product'}"></h1>
+<p class="lead text-muted" th:text="${product.get('description') != null ? product.get('description').asText() : ''}"></p>
+<div class="fs-3 fw-bold mb-4" th:if="${product.get('price') != null}" th:text="${(product.get('price').get('currency') != null ? product.get('price').get('currency').asText() : '') + ' ' + (product.get('price').get('amount') != null ? product.get('price').get('amount').asText() : '')}"></div>
+<form method="post" action="/cart/add" class="row g-2">
+<input type="hidden" name="productId" th:value="${product.get('productId') != null ? product.get('productId').asText() : product.get('id').asText()}">
+<div class="col-4"><input class="form-control" type="number" name="quantity" min="1" value="1"></div>
+<div class="col-8"><button class="btn btn-primary w-100"><i class="bi bi-cart-plus"></i> Add to cart</button></div>
+</form>
+</div></div></main>
+<div th:replace="~{fragments/footer :: footer}"></div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script></body></html>

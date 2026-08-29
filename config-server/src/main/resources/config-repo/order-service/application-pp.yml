@@ -1,0 +1,28 @@
+# Order Service - Pre-Production Environment Configuration
+# Production-like environment for final testing
+
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:pp-db.example.com}:5432/order_db
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 15
+      minimum-idle: 10
+  
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  
+  kafka:
+    bootstrap-servers: ${KAFKA_BROKERS}
+
+logging:
+  level:
+    root: INFO
+    com.ecommerce.order: INFO

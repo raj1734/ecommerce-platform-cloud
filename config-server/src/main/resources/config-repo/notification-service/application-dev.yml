@@ -1,0 +1,8 @@
+# Notification Service - Dev Environment Configuration
+spring:
+  kafka:
+    bootstrap-servers: kafka:9092
+
+logging:
+  level:
+    com.ecommerce.notification: DEBUG

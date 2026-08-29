@@ -1,0 +1,4 @@
+aws_region = "ap-south-1"
+project_name = "ecommerce-platform"
+db_username = "ecommerce"
+db_password = "CHANGE_ME"

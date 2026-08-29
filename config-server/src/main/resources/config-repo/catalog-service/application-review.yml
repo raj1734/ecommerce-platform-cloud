@@ -1,0 +1,23 @@
+# Catalog Service - Review Environment Configuration
+# For code review and PR testing
+# Uses Embedded MongoDB (Flapdoodle) for in-memory testing
+
+spring:
+  # Embedded MongoDB (Flapdoodle) - In-Memory
+  data:
+    mongodb:
+      # No URI needed - Flapdoodle auto-configures embedded MongoDB
+      database: catalog_db
+
+  redis:
+    host: localhost
+    port: 6379
+
+  cache:
+    type: redis
+
+logging:
+  level:
+    root: INFO
+    com.ecommerce.catalog: DEBUG
+    de.flapdoodle.embed: INFO  # Embedded MongoDB logs

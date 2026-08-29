@@ -1,0 +1,241 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{layout :: head('Order Details')}"></head>
+
+<body>
+
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main class="container py-4 py-lg-5">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <div class="small text-muted">Order</div>
+
+            <h1 class="fw-bold mb-1"
+                th:if="${orderNumberNode != null}"
+                th:text="${orderNumberNode.asText()}">
+                Order
+            </h1>
+
+            <div class="small text-muted"
+                 th:if="${orderIdNode != null}">
+                ID:
+                <span th:text="${orderIdNode.asText()}"></span>
+            </div>
+        </div>
+
+        <a th:href="@{/orders}"
+           class="btn btn-outline-secondary">
+            Back to Orders
+        </a>
+    </div>
+
+
+    <!-- Order summary -->
+    <div class="card border-0 shadow-sm mb-4">
+
+        <div class="card-body p-4">
+
+            <h5 class="fw-bold mb-4">
+                Order Summary
+            </h5>
+
+            <div class="row g-4">
+
+                <div class="col-md-4">
+                    <div class="small text-muted">
+                        Status
+                    </div>
+
+                    <span class="badge"
+                          th:text="${statusNode != null
+                              ? statusNode.asText()
+                              : 'UNKNOWN'}">
+                        UNKNOWN
+                    </span>
+                </div>
+
+
+                <div class="col-md-4">
+                    <div class="small text-muted">
+                        Payment Status
+                    </div>
+
+                    <span class="badge"
+                          th:text="${paymentStatusNode != null
+                              ? paymentStatusNode.asText()
+                              : 'UNKNOWN'}">
+                        UNKNOWN
+                    </span>
+                </div>
+
+
+                <div class="col-md-4">
+                    <div class="small text-muted">
+                        Order Total
+                    </div>
+
+                    <div class="fw-bold fs-5">
+
+                        <span th:if="${currencyNode != null}"
+                              th:text="${currencyNode.asText()}">
+                        </span>
+
+                        <span th:unless="${currencyNode != null}">
+                            INR
+                        </span>
+
+                        <span th:if="${totalAmountNode != null}"
+                              th:text="${totalAmountNode.asText()}">
+                        </span>
+
+                        <span th:if="${totalAmountNode == null}">
+                            0.00
+                        </span>
+
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- Items -->
+    <div class="card border-0 shadow-sm">
+
+        <div class="card-body p-4">
+
+            <h5 class="fw-bold mb-4">
+                Items in this order
+            </h5>
+
+
+            <div th:if="${#lists.isEmpty(items)}"
+                 class="text-muted">
+
+                No order items available.
+
+            </div>
+
+
+            <div th:unless="${#lists.isEmpty(items)}"
+                 class="table-responsive">
+
+                <table class="table align-middle mb-0">
+
+                    <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Quantity</th>
+                        <th>Unit Price</th>
+                        <th class="text-end">Subtotal</th>
+                    </tr>
+                    </thead>
+
+
+                    <tbody>
+
+                    <tr th:each="item : ${items}">
+
+                        <td>
+
+                            <div class="fw-semibold"
+                                 th:if="${item.get('productName') != null}"
+                                 th:text="${item.get('productName').asText()}">
+                            </div>
+
+                            <div class="small text-muted"
+                                 th:if="${item.get('productId') != null}">
+                                ID:
+                                <span th:text="${item.get('productId').asText()}"></span>
+                            </div>
+
+                        </td>
+
+
+                        <td>
+                            <span th:if="${item.get('quantity') != null}"
+                                  th:text="${item.get('quantity').asText()}">
+                            </span>
+
+                            <span th:unless="${item.get('quantity') != null}">
+                                -
+                            </span>
+                        </td>
+
+
+                        <td>
+
+                            <span th:if="${currencyNode != null}"
+                                  th:text="${currencyNode.asText()}">
+                            </span>
+
+                            <span th:unless="${currencyNode != null}">
+                                INR
+                            </span>
+
+                            <span th:if="${item.get('unitPrice') != null}"
+                                  th:text="${item.get('unitPrice').asText()}">
+                            </span>
+
+                        </td>
+
+
+                        <td class="text-end">
+
+                            <span th:if="${currencyNode != null}"
+                                  th:text="${currencyNode.asText()}">
+                            </span>
+
+                            <span th:unless="${currencyNode != null}">
+                                INR
+                            </span>
+
+                            <span th:if="${item.get('subtotal') != null}"
+                                  th:text="${item.get('subtotal').asText()}">
+                            </span>
+
+                        </td>
+
+                    </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- Cancel -->
+    <div class="mt-4"
+         th:if="${statusNode != null
+             and statusNode.asText() != 'COMPLETED'
+             and statusNode.asText() != 'CANCELLED'}">
+
+        <form method="post"
+              th:action="@{'/orders/' + orderIdNode.asText() + '/cancel'}">
+
+            <button type="submit"
+                    class="btn btn-outline-danger">
+                Cancel Order
+            </button>
+
+        </form>
+
+    </div>
+
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+</body>
+</html>

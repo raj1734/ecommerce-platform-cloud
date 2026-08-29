@@ -1,0 +1,21 @@
+# Catalog Service - QA Environment Configuration
+# Quality Assurance testing environment
+
+spring:
+  data:
+    mongodb:
+      uri: mongodb://${MONGO_USERNAME:ecommerce_user}:${MONGO_PASSWORD}@${MONGO_HOST:qa-mongo.example.com}:27017/catalog_db
+      auto-index-creation: true
+  
+  redis:
+    host: ${REDIS_HOST:qa-redis.example.com}
+    port: 6379
+    password: ${REDIS_PASSWORD:}
+  
+  cache:
+    type: redis
+
+logging:
+  level:
+    root: INFO
+    com.ecommerce.catalog: DEBUG

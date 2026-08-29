@@ -1,0 +1,4 @@
+# Payment Service - Dev profile (stub, no DB)
+logging:
+  level:
+    com.ecommerce.payment: INFO

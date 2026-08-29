@@ -1,0 +1,45 @@
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:h2:mem:order_db}
+    username: ${SPRING_DATASOURCE_USERNAME:sa}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+catalog:
+  service:
+    url: ${CATALOG_SERVICE_URL:http://localhost:8082}
+inventory:
+  service:
+    url: ${INVENTORY_SERVICE_URL:http://localhost:8086}
+payment:
+  service:
+    url: ${PAYMENT_SERVICE_URL:http://localhost:8088}
+
+user:
+  service:
+    url: ${USER_SERVICE_URL:http://localhost:8087}
+
+resilience4j:
+  retry:
+    instances:
+      catalogService: {max-attempts: 3, wait-duration: 300ms}
+      inventoryService: {max-attempts: 2, wait-duration: 300ms}
+      paymentService: {max-attempts: 2, wait-duration: 300ms}
+  circuitbreaker:
+    instances:
+      catalogService: {sliding-window-size: 10, minimum-number-of-calls: 5, failure-rate-threshold: 50, wait-duration-in-open-state: 10s}
+      inventoryService: {sliding-window-size: 10, minimum-number-of-calls: 5, failure-rate-threshold: 50, wait-duration-in-open-state: 10s}
+      paymentService: {sliding-window-size: 10, minimum-number-of-calls: 5, failure-rate-threshold: 50, wait-duration-in-open-state: 10s}
