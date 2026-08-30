@@ -1,0 +1,7 @@
+spring:
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:${KAFKA_BROKERS:localhost:9092}}
+
+logging:
+  level:
+    com.ecommerce.notification: INFO

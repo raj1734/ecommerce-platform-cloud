@@ -1,0 +1,703 @@
+version: "3.8"
+
+# ============================================================
+# Distributed E-Commerce - DEV Docker Compose
+#
+# Runs the application profile used for AWS ECS: dev.
+# Config Server serves the packaged config-repo using native profile.
+# All application services use SPRING_PROFILES_ACTIVE=dev.
+#
+# Start:
+#   docker compose -f docker-compose-dev.yml up --build
+#
+# UI:          http://localhost:8090
+# Gateway:     http://localhost:8080
+# Config:      http://localhost:8889
+# Prometheus:  http://localhost:9090
+# Grafana:     http://localhost:3000  (admin/admin)
+# Zipkin:      http://localhost:9411
+# ============================================================
+
+services:
+
+  # ==========================================================
+  # CONFIG SERVER
+  # ==========================================================
+  config-server:
+    build:
+      context: ./config-server
+    container_name: config-server
+    environment:
+      SPRING_PROFILES_ACTIVE: native
+      CONFIG_REPO_PATH: classpath:/config-repo
+      CONFIG_USERNAME: admin
+      CONFIG_PASSWORD: admin123
+      TRACING_ENDPOINT: http://zipkin:9411/api/v2/spans
+      TRACING_SAMPLING_PROBABILITY: "1.0"
+    ports:
+      - "8889:8889"
+    depends_on:
+      zipkin:
+        condition: service_started
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --no-verbose --tries=1 --spider http://localhost:8889/actuator/health || exit 1"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    networks:
+      - ecommerce-network
+
+  # ==========================================================
+  # AUTH SERVICE - DEV
+  # ==========================================================
+  auth-service:
+    build:
+      context: ./auth-service
+    container_name: auth-service
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      CONFIG_SERVER_HOST: config-server
+      SPRING_DATASOURCE_URL: jdbc:postgresql://auth-db:5432/auth_db
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      JWT_SECRET: mySecretKey123456789012345678901234567890
+      JWT_EXPIRATION: "86400000"
+      JWT_REFRESH_EXPIRATION: "604800000"
+      AUTH_BOOTSTRAP_ADMIN_ENABLED: "true"
+      AUTH_BOOTSTRAP_ADMIN_USERNAME: admin
+      AUTH_BOOTSTRAP_ADMIN_EMAIL: admin@example.com
+      AUTH_BOOTSTRAP_ADMIN_PASSWORD: admin
+      TRACING_ENDPOINT: http://zipkin:9411/api/v2/spans
+      TRACING_SAMPLING_PROBABILITY: "1.0"
+    ports:
+      - "8081:8081"
+    depends_on:
+      config-server:
+        condition: service_healthy
+      auth-db:
+        condition: service_healthy
+      zipkin:
+        condition: service_started
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --no-verbose --tries=1 --spider http://localhost:8081/actuator/health || exit 1"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    networks:
+      - ecommerce-network
+
+  # ==========================================================
+  # USER SERVICE - DEV
+  # ==========================================================
+  user-service:
+    build:
+      context: ./user-service
+    container_name: user-service
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      CONFIG_SERVER_HOST: config-server
+      SPRING_DATASOURCE_URL: jdbc:postgresql://user-db:5432/user_db
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      TRACING_ENDPOINT: http://zipkin:9411/api/v2/spans
+      TRACING_SAMPLING_PROBABILITY: "1.0"
+    ports:
+      - "8087:8087"
+    depends_on:
+      config-server:
+        condition: service_healthy
+      user-db:
+        condition: service_healthy
+      zipkin:
+        condition: service_started
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --no-verbose --tries=1 --spider http://localhost:8087/actuator/health || exit 1"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    networks:
+      - ecommerce-network
+
+  # ==========================================================
+  # CATALOG SERVICE - DEV
+  # ==========================================================
+  catalog-service:
+    build:
+      context: ./catalog-service
+    container_name: catalog-service
+    environment:
+      CONFIG_SERVER_HOST: config-server
+      CATALOG_REPOSITORY_TYPE: mongo
+      CATALOG_CACHE_TYPE: redis
+      SPRING_DATA_MONGODB_URI: mongodb://catalog-db:27017/catalog_db
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: "6379"
+      REDIS_PASSWORD: ""
+      SPRING_REDIS_SSL: "false"
+      TRACING_ENDPOINT: http://zipkin:9411/api/v2/spans
+      TRACING_SAMPLING_PROBABILITY: "1.0"
+    ports:
+      - "8082:8082"
+    depends_on:
+      config-server:
+        condition: service_healthy
+      catalog-db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      zipkin:
+        condition: service_started
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --no-verbose --tries=1 --spider http://localhost:8082/actuator/health || exit 1"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    networks:
+      - ecommerce-network
+
+  # ==========================================================
+  # INVENTORY SERVICE - DEV
+  # ==========================================================
+  inventory-service:
+    build:
+      context: ./inventory-service
+    container_name: inventory-service
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      CONFIG_SERVER_HOST: config-server
+      SPRING_DATASOURCE_URL: jdbc:postgresql://inventory-db:5432/inventory_db
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_BROKERS: kafka:9092
+      TRACING_ENDPOINT: http://zipkin:9411/api/v2/spans
+      TRACING_SAMPLING_PROBABILITY: "1.0"
+    ports:
+      - "8086:8086"
+    depends_on:
+      config-server:
+        condition: service_healthy
+      inventory-db:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      zipkin:
+        condition: service_started
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --no-verbose --tries=1 --spider http://localhost:8086/actuator/health || exit 1"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    networks:
+      - ecommerce-network
+
+  # ==========================================================
+  # PAYMENT SERVICE - DEV
+  # ==========================================================
+  payment-service:
+    build:
+      context: ./payment-service
+    container_name: payment-service
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      CONFIG_SERVER_HOST: config-server
+      TRACING_ENDPOINT: http://zipkin:9411/api/v2/spans
+      TRACING_SAMPLING_PROBABILITY: "1.0"
+    ports:
+      - "8088:8088"
+    depends_on:
+      config-server:
+        condition: service_healthy
+      zipkin:
+        condition: service_started
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --no-verbose --tries=1 --spider http://localhost:8088/actuator/health || exit 1"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    networks:
+      - ecommerce-network
+
+  # ==========================================================
+  # NOTIFICATION SERVICE - DEV
+  # ==========================================================
+  notification-service:
+    build:
+      context: ./notification-service
+    container_name: notification-service
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      CONFIG_SERVER_HOST: config-server
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_BROKERS: kafka:9092
+      TRACING_ENDPOINT: http://zipkin:9411/api/v2/spans
+      TRACING_SAMPLING_PROBABILITY: "1.0"
+    ports:
+      - "8084:8084"
+    depends_on:
+      config-server:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      zipkin:
+        condition: service_started
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --no-verbose --tries=1 --spider http://localhost:8084/actuator/health || exit 1"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    networks:
+      - ecommerce-network
+
+  # ==========================================================
+  # ORDER SERVICE - DEV
+  # ==========================================================
+  order-service:
+    build:
+      context: ./order-service
+    container_name: order-service
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      CONFIG_SERVER_HOST: config-server
+      SPRING_DATASOURCE_URL: jdbc:postgresql://order-db:5432/order_db
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_BROKERS: kafka:9092
+      CATALOG_SERVICE_URL: http://catalog-service:8082
+      INVENTORY_SERVICE_URL: http://inventory-service:8086
+      PAYMENT_SERVICE_URL: http://payment-service:8088
+      USER_SERVICE_URL: http://user-service:8087
+      TRACING_ENDPOINT: http://zipkin:9411/api/v2/spans
+      TRACING_SAMPLING_PROBABILITY: "1.0"
+    ports:
+      - "8083:8083"
+    depends_on:
+      config-server:
+        condition: service_healthy
+      order-db:
+        condition: service_healthy
+      catalog-service:
+        condition: service_started
+      inventory-service:
+        condition: service_started
+      payment-service:
+        condition: service_started
+      user-service:
+        condition: service_started
+      kafka:
+        condition: service_healthy
+      zipkin:
+        condition: service_started
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --no-verbose --tries=1 --spider http://localhost:8083/actuator/health || exit 1"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    networks:
+      - ecommerce-network
+
+  # ==========================================================
+  # GATEWAY SERVICE - DEV
+  # ==========================================================
+  gateway-service:
+    build:
+      context: ./gateway-service
+    container_name: gateway-service
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      CONFIG_SERVER_HOST: config-server
+      JWT_SECRET: mySecretKey123456789012345678901234567890
+      AUTH_SERVICE_URL: http://auth-service:8081
+      USER_SERVICE_URL: http://user-service:8087
+      CATALOG_SERVICE_URL: http://catalog-service:8082
+      INVENTORY_SERVICE_URL: http://inventory-service:8086
+      ORDER_SERVICE_URL: http://order-service:8083
+      PAYMENT_SERVICE_URL: http://payment-service:8088
+      NOTIFICATION_SERVICE_URL: http://notification-service:8084
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: "6379"
+      REDIS_PASSWORD: ""
+      SPRING_REDIS_SSL: "false"
+      TRACING_ENDPOINT: http://zipkin:9411/api/v2/spans
+      TRACING_SAMPLING_PROBABILITY: "1.0"
+    ports:
+      - "8080:8080"
+    depends_on:
+      config-server:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
+      user-service:
+        condition: service_started
+      catalog-service:
+        condition: service_started
+      inventory-service:
+        condition: service_started
+      order-service:
+        condition: service_started
+      payment-service:
+        condition: service_started
+      notification-service:
+        condition: service_started
+      zipkin:
+        condition: service_started
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    networks:
+      - ecommerce-network
+
+  # ==========================================================
+  # STOREFRONT / UI
+  # ==========================================================
+  web-storefront:
+    build:
+      context: ./web-storefront
+    container_name: web-storefront
+    environment:
+      GATEWAY_URL: http://gateway-service:8080
+      TRACING_ENDPOINT: http://zipkin:9411/api/v2/spans
+      TRACING_SAMPLING_PROBABILITY: "1.0"
+    ports:
+      - "8090:8090"
+    depends_on:
+      gateway-service:
+        condition: service_started
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --no-verbose --tries=1 --spider http://localhost:8090/actuator/health || exit 1"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    networks:
+      - ecommerce-network
+
+  # ==========================================================
+  # POSTGRESQL - DEV DATABASES
+  # ==========================================================
+  auth-db:
+    image: postgres:15.4-alpine
+    container_name: auth-db
+    environment:
+      POSTGRES_DB: auth_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - auth-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d auth_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - ecommerce-network
+
+  user-db:
+    image: postgres:15.4-alpine
+    container_name: user-db
+    environment:
+      POSTGRES_DB: user_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5434:5432"
+    volumes:
+      - user-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d user_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - ecommerce-network
+
+  order-db:
+    image: postgres:15.4-alpine
+    container_name: order-db
+    environment:
+      POSTGRES_DB: order_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - order-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d order_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - ecommerce-network
+
+  inventory-db:
+    image: postgres:15.4-alpine
+    container_name: inventory-db
+    environment:
+      POSTGRES_DB: inventory_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5435:5432"
+    volumes:
+      - inventory-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d inventory_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - ecommerce-network
+
+  # ==========================================================
+  # MONGODB - CATALOG
+  # ==========================================================
+  catalog-db:
+    image: mongo:7.0
+    container_name: catalog-db
+    ports:
+      - "27017:27017"
+    volumes:
+      - catalog-db-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - ecommerce-network
+
+  # ==========================================================
+  # REDIS
+  # ==========================================================
+  redis:
+    image: redis:7.2-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - ecommerce-network
+
+  # ==========================================================
+  # KAFKA
+  # ==========================================================
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "echo ruok | nc -w 2 localhost 2181 | grep imok || exit 1"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - ecommerce-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: kafka
+    depends_on:
+      zookeeper:
+        condition: service_started
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:9092,EXTERNAL://0.0.0.0:29092
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9092,EXTERNAL://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "kafka-topics --bootstrap-server localhost:9092 --list >/dev/null 2>&1"
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+    networks:
+      - ecommerce-network
+
+  # ==========================================================
+  # ZIPKIN
+  # ==========================================================
+  zipkin:
+    image: openzipkin/zipkin:3
+    container_name: zipkin
+    ports:
+      - "9411:9411"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --no-verbose --tries=1 --spider http://localhost:9411/health || exit 1"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - ecommerce-network
+
+  # ==========================================================
+  # PROMETHEUS
+  # ==========================================================
+  prometheus:
+    image: prom/prometheus:v2.48.0
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+    depends_on:
+      gateway-service:
+        condition: service_started
+      auth-service:
+        condition: service_started
+      user-service:
+        condition: service_started
+      catalog-service:
+        condition: service_started
+      inventory-service:
+        condition: service_started
+      order-service:
+        condition: service_started
+      payment-service:
+        condition: service_started
+      notification-service:
+        condition: service_started
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --no-verbose --tries=1 --spider http://localhost:9090/-/healthy || exit 1"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - ecommerce-network
+
+  # ==========================================================
+  # GRAFANA
+  # ==========================================================
+  grafana:
+    image: grafana/grafana:10.2.0
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    depends_on:
+      prometheus:
+        condition: service_started
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - ecommerce-network
+
+volumes:
+  auth-db-data:
+  user-db-data:
+  order-db-data:
+  inventory-db-data:
+  catalog-db-data:
+  prometheus-data:
+  grafana-data:
+
+networks:
+  ecommerce-network:
+    driver: bridge

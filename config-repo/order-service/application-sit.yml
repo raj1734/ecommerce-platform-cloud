@@ -1,0 +1,28 @@
+# Order Service - SIT Environment Configuration
+# System Integration Testing environment
+
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:sit-db.example.com}:5432/order_db
+    username: ${DB_USERNAME:ecommerce_user}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+  
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  
+  kafka:
+    bootstrap-servers: ${KAFKA_BROKERS:sit-kafka.example.com:9092}
+
+logging:
+  level:
+    root: INFO
+    com.ecommerce.order: DEBUG

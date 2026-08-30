@@ -1,0 +1,12 @@
+# Payment Service - Centralized Configuration (stub, LLD §7 & §16)
+server:
+  port: 8088
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  metrics:
+    tags:
+      application: payment-service

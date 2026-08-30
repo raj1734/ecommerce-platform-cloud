@@ -1,0 +1,31 @@
+server:
+  port: 8889
+
+spring:
+  application:
+    name: config-server
+  profiles:
+    active: native  # Use native profile for local file system
+  cloud:
+    config:
+      server:
+        native:
+          # First location = shared/global config, second = per-application subfolders (e.g. config-repo/auth-service)
+          search-locations: classpath:/config-repo,file:${CONFIG_REPO_PATH:./config-repo},classpath:/config-repo/{application},file:${CONFIG_REPO_PATH:./config-repo}/{application}
+        # GIT SETUP - COMMENTED FOR FUTURE USE
+        # git:
+        #   uri: ${CONFIG_GIT_URI:https://github.com/raj1734/config-repo}
+        #   default-label: main
+        #   clone-on-start: true
+        #   search-paths:
+        #     - '{application}'
+  security:
+    user:
+      name: ${CONFIG_USERNAME:admin}
+      password: ${CONFIG_PASSWORD:admin123}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,refresh

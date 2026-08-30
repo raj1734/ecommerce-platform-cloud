@@ -1,0 +1,9 @@
+# Notification Service - Local Environment Configuration
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+
+logging:
+  level:
+    root: INFO
+    com.ecommerce.notification: TRACE

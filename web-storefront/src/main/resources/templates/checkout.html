@@ -1,0 +1,23 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org"><head th:replace="~{layout :: head('Checkout')}"></head>
+<body><div th:replace="~{fragments/header :: header}"></div>
+<main class="container py-4"><h1 class="fw-bold mb-4">Checkout</h1>
+<div class="alert alert-danger" th:if="${error}" th:text="${error}"></div>
+<form method="post" action="/checkout" class="row g-4">
+<div class="col-lg-7">
+<div class="card border-0 shadow-sm mb-4"><div class="card-body"><h5>Shipping address</h5>
+<div th:if="${#lists.isEmpty(addresses)}" class="alert alert-warning">Add an address in <a href="/account">My Account</a> first.</div>
+<div class="form-check border rounded p-3 mb-2" th:each="a : ${addresses}">
+<input class="form-check-input ms-0 me-2" type="radio" name="shippingAddressId" required th:value="${a.get('addressId') != null ? a.get('addressId').asText() : a.get('id').asText()}">
+<label class="form-check-label"><strong th:text="${a.get('addressLine1') != null ? a.get('addressLine1').asText() : ''}"></strong><br>
+<span th:text="${(a.get('city') != null ? a.get('city').asText() : '') + ', ' + (a.get('state') != null ? a.get('state').asText() : '') + ' ' + (a.get('postalCode') != null ? a.get('postalCode').asText() : '')}"></span></label>
+</div></div></div>
+<div class="card border-0 shadow-sm"><div class="card-body"><h5>Payment</h5>
+<select class="form-select" name="paymentMethod" required><option value="CARD">Card</option><option value="COD">Cash on delivery</option><option value="UPI">UPI</option></select>
+</div></div></div>
+<div class="col-lg-5"><div class="card border-0 shadow-sm"><div class="card-body"><h5>Order</h5>
+<p class="text-muted">Cart ID: <span th:text="${cart.get('cartId') != null ? cart.get('cartId').asText() : cart.get('id').asText()}"></span></p>
+<input type="hidden" name="cartId" th:value="${cart.get('cartId') != null ? cart.get('cartId').asText() : cart.get('id').asText()}">
+<button class="btn btn-primary w-100 mt-3" type="submit" th:disabled="${#lists.isEmpty(addresses)}">Place order</button>
+</div></div></div>
+</form></main><div th:replace="~{fragments/footer :: footer}"></div></body></html>

@@ -1,0 +1,145 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('Shopping Cart')}"></head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main class="container py-4 py-lg-5">
+    <div class="d-flex justify-content-between align-items-end flex-wrap gap-3 mb-4">
+        <div>
+            <div class="text-primary fw-semibold small text-uppercase letter-spacing-1">Your shopping bag</div>
+            <h1 class="fw-bold mb-1">Shopping Cart</h1>
+            <p class="text-muted mb-0">Review your products, update quantities, and continue to checkout.</p>
+        </div>
+        <a href="/products" class="btn btn-outline-primary"><i class="bi bi-arrow-left me-1"></i> Continue shopping</a>
+    </div>
+
+    <div th:if="${#lists.isEmpty(items)}" class="card border-0 shadow-sm empty-state">
+        <div class="card-body text-center py-5">
+            <div class="empty-icon mb-3"><i class="bi bi-bag-x"></i></div>
+            <h3 class="fw-bold">Your cart is empty</h3>
+            <p class="text-muted mb-4">Looks like you haven't added anything yet.</p>
+            <a href="/products" class="btn btn-primary px-4">Explore products</a>
+        </div>
+    </div>
+
+    <div class="row g-4" th:unless="${#lists.isEmpty(items)}">
+        <div class="col-lg-8">
+            <div class="cart-card card border-0 shadow-sm overflow-hidden">
+                <div class="card-header bg-white border-0 p-4 pb-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="fw-bold mb-0">Cart items</h5>
+                        <span class="badge rounded-pill text-bg-light px-3 py-2"
+                              th:text="${#lists.size(items) + ' item' + (#lists.size(items) == 1 ? '' : 's')}"></span>
+                    </div>
+                </div>
+
+                <div class="cart-item" th:each="item, stat : ${items}">
+                    <div class="row g-3 align-items-center p-4">
+                        <div class="col-auto">
+                            <a th:href="@{'/products/' + ${item.get('productId').asText()}}" class="cart-thumb">
+                                <img th:if="${item.get('productImageUrl') != null and !item.get('productImageUrl').asText().isBlank()}"
+                                     th:src="${item.get('productImageUrl').asText()}" alt="Product image">
+                                <span th:unless="${item.get('productImageUrl') != null and !item.get('productImageUrl').asText().isBlank()}">
+                                    <i class="bi bi-image"></i>
+                                </span>
+                            </a>
+                        </div>
+
+                        <div class="col min-width-0">
+                            <div class="small text-muted mb-1"
+                                 th:text="${item.get('productCategory') != null ? item.get('productCategory').asText() : 'Product'}"></div>
+                            <a class="text-decoration-none text-dark"
+                               th:href="@{'/products/' + ${item.get('productId').asText()}}">
+                                <h5 class="fw-bold mb-1 text-truncate"
+                                    th:if="${item.get('productName') != null}"
+                                    th:text="${item.get('productName').asText()}"></h5>
+                                <h5 class="fw-bold mb-1 text-truncate" th:unless="${item.get('productName') != null}">
+                                    Product <span th:text="${item.get('productId').asText()}"></span>
+                                </h5>
+                            </a>
+                            <div class="small text-muted d-flex flex-wrap gap-2">
+                                <span th:if="${item.get('productBrand') != null}" th:text="${item.get('productBrand').asText()}"></span>
+                                <span th:if="${item.get('sku') != null}">SKU: <span th:text="${item.get('sku').asText()}"></span></span>
+                                <span th:if="${item.get('productId') != null}">ID: <span th:text="${item.get('productId').asText()}"></span></span>
+                            </div>
+                            <div class="mt-2 fw-semibold">
+                                <span th:text="${cart.get('currency') != null ? cart.get('currency').asText() : 'INR'}"></span>
+                                <span th:text="${item.get('unitPrice') != null ? item.get('unitPrice').asText() : '0.00'}"></span>
+                                <span class="text-muted fw-normal small">each</span>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-md-auto">
+                            <div class="d-flex align-items-center justify-content-between gap-3">
+                                <form class="quantity-form" method="post" th:action="@{'/cart/items/' + ${item.get('itemId').asText()}}">
+                                    <label class="small text-muted d-block mb-1">Quantity</label>
+                                    <div class="input-group input-group-sm quantity-group">
+                                        <button type="button" class="btn btn-outline-secondary qty-minus">−</button>
+                                        <input class="form-control text-center quantity-input" type="number" min="1" name="quantity"
+                                               th:value="${item.get('quantity') != null ? item.get('quantity').asInt() : 1}">
+                                        <button type="button" class="btn btn-outline-secondary qty-plus">+</button>
+                                    </div>
+                                    <button class="btn btn-sm btn-primary w-100 mt-2" type="submit">
+                                        <i class="bi bi-arrow-repeat me-1"></i> Update
+                                    </button>
+                                </form>
+
+                                <div class="text-end ms-2">
+                                    <div class="small text-muted">Subtotal</div>
+                                    <div class="fw-bold fs-5 text-nowrap">
+                                        <span th:text="${cart.get('currency') != null ? cart.get('currency').asText() : 'INR'}"></span>
+                                        <span th:text="${item.get('subtotal') != null ? item.get('subtotal').asText() : '0.00'}"></span>
+                                    </div>
+                                    <form method="post" th:action="@{'/cart/items/' + ${item.get('itemId').asText()} + '/delete'}" class="mt-2">
+                                        <button type="submit" class="btn btn-link btn-sm text-danger p-0"
+                                                onclick="return confirm('Remove this item from your cart?');">
+                                            <i class="bi bi-trash3 me-1"></i> Remove
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div th:if="${!stat.last}" class="cart-divider"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm summary-card sticky-lg-top">
+                <div class="card-body p-4">
+                    <div class="small text-muted text-uppercase fw-semibold letter-spacing-1">Order summary</div>
+                    <h4 class="fw-bold mt-1 mb-4">Your total</h4>
+                    <div class="d-flex justify-content-between mb-2"><span class="text-muted">Items</span><span th:text="${#lists.size(items)}"></span></div>
+                    <div class="d-flex justify-content-between mb-3"><span class="text-muted">Delivery</span><span class="text-success fw-semibold">Calculated at checkout</span></div>
+                    <hr>
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <span class="fw-bold">Cart total</span>
+                        <span class="fw-bold fs-4">
+                            <span th:text="${cart.get('currency') != null ? cart.get('currency').asText() : 'INR'}"></span>
+                            <span th:text="${cart.get('totalAmount') != null ? cart.get('totalAmount').asText() : '0.00'}"></span>
+                        </span>
+                    </div>
+                    <a href="/checkout" class="btn btn-primary btn-lg w-100">Proceed to checkout <i class="bi bi-arrow-right ms-1"></i></a>
+                    <div class="text-center text-muted small mt-3"><i class="bi bi-shield-check me-1"></i> Secure checkout</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+<script>
+    document.querySelectorAll('.quantity-group').forEach(function (group) {
+        const input = group.querySelector('.quantity-input');
+        group.querySelector('.qty-minus').addEventListener('click', function () {
+            input.value = Math.max(1, parseInt(input.value || '1', 10) - 1);
+        });
+        group.querySelector('.qty-plus').addEventListener('click', function () {
+            input.value = Math.max(1, parseInt(input.value || '1', 10) + 1);
+        });
+    });
+</script>
+</body>
+</html>
