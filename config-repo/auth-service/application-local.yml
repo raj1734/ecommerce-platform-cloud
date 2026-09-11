@@ -1,0 +1,21 @@
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:h2:mem:auth_db}
+    username: ${SPRING_DATASOURCE_USERNAME:sa}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+jwt:
+  expiration: ${JWT_EXPIRATION:3600000}
+auth:
+  bootstrap-admin:
+    enabled: ${AUTH_BOOTSTRAP_ADMIN_ENABLED:true}
+    username: ${AUTH_BOOTSTRAP_ADMIN_USERNAME:admin}
+    email: ${AUTH_BOOTSTRAP_ADMIN_EMAIL:admin@example.com}
+    password: ${AUTH_BOOTSTRAP_ADMIN_PASSWORD:admin}

@@ -1,0 +1,140 @@
+openapi: 3.0.3
+info:
+  title: E-Commerce Platform API
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+security:
+  - bearerAuth: []
+paths:
+  /api/v1/auth/register:
+    post:
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RegisterRequest' }
+      responses: { '201': { description: Created } }
+  /api/v1/auth/login:
+    post:
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginRequest' }
+      responses: { '200': { description: OK } }
+  /api/v1/auth/validate:
+    post:
+      responses: { '200': { description: OK } }
+  /api/v1/auth/logout:
+    post:
+      responses: { '200': { description: OK } }
+  /api/v1/users/me:
+    get: { responses: { '200': { description: OK } } }
+    put:
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ProfileRequest' } } } }
+      responses: { '200': { description: OK } }
+  /api/v1/users/me/addresses:
+    get: { responses: { '200': { description: OK } } }
+    post:
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AddressRequest' } } } }
+      responses: { '201': { description: Created } }
+  /api/v1/users/me/preferences:
+    put:
+      requestBody: { required: true, content: { application/json: { schema: { type: object } } } }
+      responses: { '200': { description: OK } }
+  /api/v1/products:
+    get: { responses: { '200': { description: Product page } } }
+    post:
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ProductRequest' } } } }
+      responses: { '201': { description: Created } }
+  /api/v1/products/{productId}:
+    parameters: [{ $ref: '#/components/parameters/ProductId' }]
+    get: { responses: { '200': { description: Product } } }
+    put:
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ProductRequest' } } } }
+      responses: { '200': { description: Updated } }
+  /api/v1/products/{productId}/status:
+    parameters: [{ $ref: '#/components/parameters/ProductId' }]
+    patch:
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [status], properties: { status: { type: string, example: INACTIVE } } } } } }
+      responses: { '200': { description: Updated } }
+  /api/v1/inventory/{productId}:
+    parameters: [{ $ref: '#/components/parameters/ProductId' }]
+    get: { responses: { '200': { description: Availability } } }
+  /api/v1/inventory/reservations:
+    post:
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody: { required: true, content: { application/json: { schema: { type: object } } } }
+      responses: { '201': { description: Reserved } }
+  /api/v1/cart:
+    get: { responses: { '200': { description: Cart } } }
+  /api/v1/cart/items:
+    post:
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [productId, quantity] } } } }
+      responses: { '201': { description: Updated cart } }
+  /api/v1/cart/items/{itemId}:
+    parameters: [{ $ref: '#/components/parameters/ItemId' }]
+    patch: { responses: { '200': { description: Updated cart } } }
+    delete: { responses: { '200': { description: Updated cart } } }
+  /api/v1/orders/checkout:
+    post:
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }, { $ref: '#/components/parameters/CorrelationId' }]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [cartId, shippingAddressId, paymentMethod] } } } }
+      responses: { '201': { description: Created order } }
+  /api/v1/orders/{orderId}:
+    parameters: [{ $ref: '#/components/parameters/OrderId' }]
+    get: { responses: { '200': { description: Order } } }
+  /api/v1/orders:
+    get: { responses: { '200': { description: User orders } } }
+  /api/v1/orders/{orderId}/cancel:
+    parameters: [{ $ref: '#/components/parameters/OrderId' }]
+    post:
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      responses: { '200': { description: Cancelled order } }
+  /api/v1/payments:
+    post: { responses: { '200': { description: Payment result } } }
+  /api/v1/payments/{paymentId}/refund:
+    post: { responses: { '200': { description: Refund result } } }
+  /api/v1/notifications:
+    post: { responses: { '200': { description: Accepted } } }
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+  parameters:
+    ProductId: { name: productId, in: path, required: true, schema: { type: string } }
+    ItemId: { name: itemId, in: path, required: true, schema: { type: string, format: uuid } }
+    OrderId: { name: orderId, in: path, required: true, schema: { type: string, format: uuid } }
+    IdempotencyKey: { name: Idempotency-Key, in: header, required: true, schema: { type: string } }
+    CorrelationId: { name: X-Correlation-ID, in: header, required: false, schema: { type: string, format: uuid } }
+  schemas:
+    RegisterRequest:
+      type: object
+      required: [username, email, password]
+      properties: { username: { type: string }, email: { type: string, format: email }, password: { type: string, format: password } }
+    LoginRequest:
+      type: object
+      required: [username, password]
+      properties: { username: { type: string }, password: { type: string, format: password } }
+    ProfileRequest:
+      type: object
+      required: [firstName]
+      properties: { firstName: { type: string }, lastName: { type: string }, phone: { type: string } }
+    AddressRequest:
+      type: object
+      required: [addressLine1, city, state, postalCode, country]
+      properties: { addressLine1: { type: string }, addressLine2: { type: string }, city: { type: string }, state: { type: string }, postalCode: { type: string }, country: { type: string }, isDefault: { type: boolean } }
+    ProductRequest:
+      type: object
+      required: [sku, name, category, price]
+      properties:
+        sku: { type: string }
+        name: { type: string }
+        description: { type: string }
+        category: { type: string }
+        brand: { type: string }
+        price: { type: object, required: [amount, currency], properties: { amount: { type: number }, currency: { type: string, minLength: 3, maxLength: 3 } } }
+        attributes: { type: object, additionalProperties: true }
+        imageUrls: { type: array, items: { type: string } }

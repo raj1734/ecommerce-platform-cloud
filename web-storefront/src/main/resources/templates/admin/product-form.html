@@ -1,0 +1,85 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('Product management')}"></head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+<main class="container py-4 py-lg-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <div class="small text-primary fw-semibold text-uppercase letter-spacing-1">Catalog management</div>
+            <h1 class="fw-bold mb-1" th:text="${productId != null ? 'Edit product' : 'Add product'}"></h1>
+            <p class="text-muted mb-0">Keep product information and images up to date.</p>
+        </div>
+        <a href="/admin" class="btn btn-outline-secondary">Back to admin</a>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-4 p-lg-5">
+            <form method="post" th:action="${productId != null ? '/admin/products/' + productId : '/admin/products'}" class="row g-4">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">SKU</label>
+                    <input class="form-control" name="sku" required th:value="${product != null and product.get('sku') != null ? product.get('sku').asText() : ''}">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Name</label>
+                    <input class="form-control" name="name" required th:value="${product != null and product.get('name') != null ? product.get('name').asText() : ''}">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Category</label>
+                    <input class="form-control" name="category" required th:value="${product != null and product.get('category') != null ? product.get('category').asText() : ''}">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Brand</label>
+                    <input class="form-control" name="brand" th:value="${product != null and product.get('brand') != null ? product.get('brand').asText() : ''}">
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-semibold">Description</label>
+                    <textarea class="form-control" name="description" rows="4" th:text="${product != null and product.get('description') != null ? product.get('description').asText() : ''}"></textarea>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Amount</label>
+                    <input class="form-control" type="number" step="0.01" name="amount" required th:value="${product != null and product.get('price') != null and product.get('price').get('amount') != null ? product.get('price').get('amount').asText() : ''}">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Currency</label>
+                    <input class="form-control" name="currency" maxlength="3" th:value="${product != null and product.get('price') != null and product.get('price').get('currency') != null ? product.get('price').get('currency').asText() : 'INR'}">
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-semibold">Product image URLs</label>
+                    <textarea class="form-control" name="imageUrls" rows="3"
+                              placeholder="One image URL per line"
+                              th:text="${imageUrlsText != null ? imageUrlsText : ''}"></textarea>
+                    <div class="form-text">Keep the existing URL when editing. You can provide multiple URLs, one per line.</div>
+                </div>
+
+                <div class="col-12" th:if="${product != null and product.get('imageUrls') != null and product.get('imageUrls').isArray() and product.get('imageUrls').size() > 0}">
+                    <div class="small text-muted mb-2">Current image</div>
+                    <div class="admin-image-preview">
+                        <img th:src="${product.get('imageUrls').get(0).asText()}" alt="Current product image">
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <button class="btn btn-primary px-4"><i class="bi bi-check2 me-1"></i> Save product</button>
+                    <a href="/admin" class="btn btn-outline-secondary ms-2">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div th:if="${productId != null}" class="card border-0 shadow-sm mt-4">
+        <div class="card-body p-4">
+            <h5 class="fw-bold">Status</h5>
+            <form method="post" th:action="@{'/admin/products/' + ${productId} + '/status'}" class="d-flex gap-2">
+                <select name="status" class="form-select" style="max-width:220px">
+                    <option th:selected="${product != null and product.get('status') != null and product.get('status').asText() == 'ACTIVE'}">ACTIVE</option>
+                    <option th:selected="${product != null and product.get('status') != null and product.get('status').asText() == 'INACTIVE'}">INACTIVE</option>
+                </select>
+                <button class="btn btn-outline-primary">Update status</button>
+            </form>
+        </div>
+    </div>
+</main>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

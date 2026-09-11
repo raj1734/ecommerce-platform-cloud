@@ -1,0 +1,60 @@
+# Gateway Service Configuration
+
+server:
+  port: 8080
+
+spring:
+  application:
+    name: gateway-service
+  cloud:
+    gateway:
+      routes:
+        - id: auth-service
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/auth/**
+          filters:
+            - StripPrefix=2
+        - id: catalog-service
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/catalog/**
+          filters:
+            - StripPrefix=2
+        - id: order-service
+          uri: http://localhost:8083
+          predicates:
+            - Path=/api/orders/**
+          filters:
+            - StripPrefix=2
+      # RequestRateLimiter default-filter DISABLED for local dev:
+      # it requires Redis on localhost:6379 AND a KeyResolver bean (none defined),
+      # which causes routing failures (surfacing as errors/403). Re-enable only
+      # after adding a KeyResolver @Bean and running Redis.
+      # default-filters:
+      #   - name: RequestRateLimiter
+      #     args:
+      #       redis-rate-limiter:
+      #         replenishRate: 10
+      #         burstCapacity: 20
+      #         requestedTokens: 1
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: false
+
+jwt:
+  secret: ${JWT_SECRET:mySecretKey123456789012345678901234567890}
+
+logging:
+  level:
+    com.ecommerce.gateway: DEBUG
+    org.springframework.cloud.gateway: DEBUG

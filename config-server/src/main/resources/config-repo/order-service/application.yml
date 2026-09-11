@@ -1,0 +1,4 @@
+# Order Service Configuration
+
+server:
+  port: 8083

@@ -1,0 +1,4 @@
+# Payment Service - Local profile (stub, no DB)
+logging:
+  level:
+    com.ecommerce.payment: DEBUG

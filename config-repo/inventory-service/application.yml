@@ -1,0 +1,29 @@
+# Inventory Service Configuration (served by Config Server)
+server:
+  port: 8086
+
+spring:
+  application:
+    name: inventory-service
+  kafka:
+    consumer:
+      group-id: inventory-service-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      auto-offset-reset: earliest
+      properties:
+        spring.json.trusted.packages: "*"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+
+logging:
+  level:
+    root: DEBUG
+    com.ecommerce.inventory: DEBUG
+    org.apache.kafka: ERROR
+    org.springframework.kafka: ERROR
+    org.springframework.kafka.listener: ERROR

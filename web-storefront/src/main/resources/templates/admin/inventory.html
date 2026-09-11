@@ -1,0 +1,73 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('Manage Inventory')}"></head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+<main class="container py-4">
+    <a href="/admin" class="text-decoration-none">← Back to admin</a>
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mt-3 mb-4">
+        <div class="d-flex align-items-center gap-3">
+            <img th:if="${product != null and product.get('imageUrls') != null and product.get('imageUrls').isArray() and product.get('imageUrls').size() > 0}"
+                 th:src="${product.get('imageUrls').get(0).asText()}" class="rounded-3 border" style="width:88px;height:88px;object-fit:cover" alt="">
+            <div th:if="${product == null or product.get('imageUrls') == null or !product.get('imageUrls').isArray() or product.get('imageUrls').size() == 0}" class="rounded-3 border bg-light d-flex align-items-center justify-content-center" style="width:88px;height:88px;font-size:30px">📦</div>
+            <div>
+                <div class="text-muted small" th:text="${productId}">P1007</div>
+                <h1 class="fw-bold mb-0" th:text="${product != null and product.get('name') != null ? product.get('name').asText() : productId}">Keyboard</h1>
+                <div class="text-muted" th:text="${inventory.get('sku').asText()}">KEYBOARD-001</div>
+            </div>
+        </div>
+        <span class="badge rounded-pill fs-6 px-3 py-2" th:classappend="${inventory.get('status').asText() == 'AVAILABLE' ? ' text-bg-success' : (inventory.get('status').asText() == 'LOW_STOCK' ? ' text-bg-warning' : ' text-bg-danger')}" th:text="${inventory.get('status').asText()}">AVAILABLE</span>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4"><div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="text-muted small">Available to sell</div><div class="display-5 fw-bold" th:text="${inventory.get('availableQuantity').asInt()}">49</div></div></div></div>
+        <div class="col-md-4"><div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="text-muted small">Reserved by orders</div><div class="display-5 fw-bold" th:text="${inventory.get('reservedQuantity').asInt()}">1</div><div class="small text-muted">Reservations are managed by checkout/cancellation.</div></div></div></div>
+        <div class="col-md-4"><div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="text-muted small">Total units</div><div class="display-5 fw-bold" th:text="${inventory.get('totalQuantity').asInt()}">50</div><div class="small text-muted">Reorder level: <span th:text="${inventory.get('reorderLevel').asInt()}">5</span></div></div></div></div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h4 class="fw-bold">Adjust available stock</h4>
+                    <p class="text-muted small">Do not edit reserved stock manually. Use adjustments only for physical stock movements or corrections.</p>
+                    <form method="post" th:action="@{'/admin/inventory/' + ${productId} + '/adjust'}">
+                        <div class="mb-3"><label class="form-label fw-semibold">Adjustment type</label>
+                            <select name="adjustmentType" class="form-select" required>
+                                <option value="STOCK_RECEIVED">+ Stock received</option>
+                                <option value="DAMAGED">− Damaged</option>
+                                <option value="LOST">− Lost / missing</option>
+                                <option value="CORRECTION_INCREASE">+ Correction</option>
+                                <option value="CORRECTION_DECREASE">− Correction</option>
+                            </select>
+                        </div>
+                        <div class="mb-3"><label class="form-label fw-semibold">Quantity</label><input name="quantity" type="number" min="1" class="form-control" required></div>
+                        <div class="mb-3"><label class="form-label fw-semibold">Reason</label><textarea name="reason" class="form-control" rows="3" maxlength="500" placeholder="e.g. New shipment received" required></textarea></div>
+                        <button class="btn btn-primary w-100" type="submit">Apply adjustment</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-0">
+                    <div class="p-3 border-bottom"><h4 class="fw-bold mb-0">Inventory history</h4><div class="small text-muted">Latest 50 stock adjustments.</div></div>
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0"><thead class="table-light"><tr><th>When</th><th>Change</th><th>Qty</th><th>Before → After</th><th>Reason</th></tr></thead>
+                        <tbody><tr th:each="h : ${history}">
+                            <td class="small" th:text="${h.get('createdAt') != null ? h.get('createdAt').asText() : ''}"></td>
+                            <td><span class="badge" th:classappend="${h.get('adjustmentType').asText().contains('DECREASE') or h.get('adjustmentType').asText() == 'DAMAGED' or h.get('adjustmentType').asText() == 'LOST' ? ' text-bg-danger' : ' text-bg-success'}" th:text="${h.get('adjustmentType').asText()}"></span></td>
+                            <td th:text="${h.get('quantity').asInt()}">10</td>
+                            <td th:text="${h.get('quantityBefore').asInt() + ' → ' + h.get('quantityAfter').asInt()}">40 → 50</td>
+                            <td th:text="${h.get('reason').asText()}">Shipment</td>
+                        </tr>
+                        <tr th:if="${history.isEmpty()}"><td colspan="5" class="text-center text-muted py-5">No manual adjustments yet.</td></tr></tbody></table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body></html>

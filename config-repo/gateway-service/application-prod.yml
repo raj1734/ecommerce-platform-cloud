@@ -1,0 +1,36 @@
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: auth-service
+          uri: ${AUTH_SERVICE_URL:http://auth-service.dev.ecommerce.local:8081}
+          predicates: [Path=/api/v1/auth/**]
+        - id: user-service
+          uri: ${USER_SERVICE_URL:http://user-service.dev.ecommerce.local:8087}
+          predicates: [Path=/api/v1/users/**]
+        - id: catalog-service
+          uri: ${CATALOG_SERVICE_URL:http://catalog-service.dev.ecommerce.local:8082}
+          predicates: [Path=/api/v1/products/**]
+        - id: inventory-service
+          uri: ${INVENTORY_SERVICE_URL:http://inventory-service.dev.ecommerce.local:8086}
+          predicates: [Path=/api/v1/inventory/**]
+        - id: order-service
+          uri: ${ORDER_SERVICE_URL:http://order-service.dev.ecommerce.local:8083}
+          predicates: [Path=/api/v1/cart/**,/api/v1/orders/**]
+        - id: payment-service
+          uri: ${PAYMENT_SERVICE_URL:http://payment-service.dev.ecommerce.local:8088}
+          predicates: [Path=/api/v1/payments/**]
+        - id: notification-service
+          uri: ${NOTIFICATION_SERVICE_URL:http://notification-service.dev.ecommerce.local:8084}
+          predicates: [Path=/api/v1/notifications/**]
+  redis:
+    host: ${REDIS_HOST}
+    port: 6379
+    password: ${REDIS_PASSWORD}
+    ssl:
+      enabled: true
+
+logging:
+  level:
+    root: INFO
+    com.ecommerce.gateway: INFO

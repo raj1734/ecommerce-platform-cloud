@@ -1,0 +1,664 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{layout :: head('My Orders')}"></head>
+
+<body>
+
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main class="container py-4 py-lg-5">
+
+    <!-- =========================================================
+         PAGE HEADER
+         ========================================================= -->
+    <div class="d-flex justify-content-between align-items-end flex-wrap gap-3 mb-4">
+
+        <div>
+            <div class="text-primary fw-semibold small text-uppercase">
+                Purchase history
+            </div>
+
+            <h1 class="fw-bold mb-1">
+                My Orders
+            </h1>
+
+            <p class="text-muted mb-0">
+                Track your purchases and view everything included in each order.
+            </p>
+        </div>
+
+        <a th:href="@{/products}"
+           class="btn btn-primary">
+
+            <i class="bi bi-bag me-1"></i>
+            Shop products
+
+        </a>
+
+    </div>
+
+
+    <!-- =========================================================
+         EMPTY STATE
+         ========================================================= -->
+    <div th:if="${orders == null or #lists.isEmpty(orders)}"
+         class="card border-0 shadow-sm empty-state">
+
+        <div class="card-body text-center py-5">
+
+            <div class="empty-icon mb-3">
+                <i class="bi bi-receipt"></i>
+            </div>
+
+            <h3 class="fw-bold">
+                No orders yet
+            </h3>
+
+            <p class="text-muted mb-4">
+                Your purchases will appear here.
+            </p>
+
+            <a th:href="@{/products}"
+               class="btn btn-primary px-4">
+
+                Start shopping
+
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         ORDER LIST
+         ========================================================= -->
+    <div th:if="${orders != null and !#lists.isEmpty(orders)}"
+         class="order-list">
+
+
+        <!-- =====================================================
+             ONE ORDER
+             ===================================================== -->
+        <article th:each="order : ${orders}"
+
+                 th:with="
+                    orderIdNode=${order.get('orderId')},
+                    orderNumberNode=${order.get('orderNumber')},
+                    idNode=${order.get('id')},
+                    statusNode=${order.get('status')},
+                    paymentStatusNode=${order.get('paymentStatus')},
+                    displayItemsNode=${order.get('displayItems')},
+                    itemsNode=${order.get('items')},
+                    currencyNode=${order.get('currency')},
+                    totalAmountNode=${order.get('totalAmount')},
+                    totalNode=${order.get('total')}
+                 "
+
+                 class="card order-card border-0 shadow-sm mb-4">
+
+
+            <div class="card-body p-4">
+
+
+                <!-- =================================================
+                     ORDER HEADER
+                     ================================================= -->
+                <div class="d-flex justify-content-between
+                            align-items-start
+                            flex-wrap
+                            gap-3
+                            mb-4">
+
+
+                    <!-- ORDER IDENTIFICATION -->
+                    <div>
+
+                        <div class="small text-muted mb-1">
+                            Order
+                        </div>
+
+
+                        <!-- Prefer orderNumber -->
+                        <h5 th:if="${orderNumberNode != null}"
+                            class="fw-bold mb-1 text-break"
+                            th:text="${orderNumberNode.asText()}">
+                            Order
+                        </h5>
+
+
+                        <!-- Fallback to orderId -->
+                        <h5 th:if="${orderNumberNode == null and orderIdNode != null}"
+                            class="fw-bold mb-1 text-break"
+                            th:text="${orderIdNode.asText()}">
+                            Order
+                        </h5>
+
+
+                        <!-- Final fallback to id -->
+                        <h5 th:if="${orderNumberNode == null
+                                    and orderIdNode == null
+                                    and idNode != null}"
+                            class="fw-bold mb-1 text-break"
+                            th:text="${idNode.asText()}">
+                            Order
+                        </h5>
+
+
+                        <!-- No identifier -->
+                        <h5 th:if="${orderNumberNode == null
+                                    and orderIdNode == null
+                                    and idNode == null}"
+                            class="fw-bold mb-1">
+                            Order
+                        </h5>
+
+
+                        <!-- UUID -->
+                        <div th:if="${orderIdNode != null}"
+                             class="small text-muted text-break">
+
+                            ID:
+
+                            <span th:text="${orderIdNode.asText()}">
+                                -
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- =================================================
+                         STATUS
+                         ================================================= -->
+                    <div class="text-md-end">
+
+
+                        <!-- Status exists -->
+                        <span th:if="${statusNode != null}"
+                              class="status-pill"
+                              th:text="${statusNode.asText()}">
+
+                            STATUS
+
+                        </span>
+
+
+                        <!-- Status missing -->
+                        <span th:if="${statusNode == null}"
+                              class="status-pill status-unknown">
+
+                            UNKNOWN
+
+                        </span>
+
+
+                        <!-- Payment status -->
+                        <div th:if="${paymentStatusNode != null}"
+                             class="small text-muted mt-2">
+
+                            Payment:
+
+                            <span th:text="${paymentStatusNode.asText()}">
+                                -
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                     ITEMS
+
+                     displayItems is supported by the current
+                     storefront response.
+
+                     If displayItems is not available, use items.
+                     ================================================= -->
+                <div th:if="${displayItemsNode != null
+                            and displayItemsNode.isArray()
+                            and displayItemsNode.size() > 0}"
+                     class="order-products">
+
+
+                    <!-- =================================================
+                         ITEM
+                         ================================================= -->
+                    <div th:each="item, stat : ${displayItemsNode}"
+
+                         th:if="${stat.index < 4}"
+
+                         th:with="
+                            productIdNode=${item.get('productId')},
+                            productNameNode=${item.get('productName')},
+                            productBrandNode=${item.get('productBrand')},
+                            productImageUrlNode=${item.get('productImageUrl')},
+                            quantityNode=${item.get('quantity')},
+                            subtotalNode=${item.get('subtotal')}
+                         "
+
+                         class="order-product-row">
+
+
+                        <!-- =================================================
+                             PRODUCT IMAGE / LINK
+                             ================================================= -->
+                        <div class="order-product-thumb">
+
+
+                            <!-- Product link when ID exists -->
+                            <a th:if="${productIdNode != null}"
+                               th:href="@{/products/{id}(id=${productIdNode.asText()})}">
+
+                                <!-- Real image -->
+                                <img th:if="${productImageUrlNode != null
+                                             and !productImageUrlNode.asText().isEmpty()}"
+
+                                     th:src="${productImageUrlNode.asText()}"
+
+                                     alt=""
+                                     loading="lazy">
+
+                                <!-- Image unavailable -->
+                                <span th:if="${productImageUrlNode == null
+                                              or productImageUrlNode.asText().isEmpty()}">
+
+                                    <i class="bi bi-image"></i>
+
+                                </span>
+
+                            </a>
+
+
+                            <!-- No product ID -->
+                            <span th:if="${productIdNode == null}">
+
+                                <i class="bi bi-image"></i>
+
+                            </span>
+
+                        </div>
+
+
+                        <!-- =================================================
+                             PRODUCT INFORMATION
+                             ================================================= -->
+                        <div class="flex-grow-1 min-width-0">
+
+
+                            <!-- Product name with link -->
+                            <a th:if="${productIdNode != null
+                                       and productNameNode != null}"
+
+                               th:href="@{/products/{id}(id=${productIdNode.asText()})}"
+
+                               class="text-decoration-none
+                                      text-dark
+                                      fw-semibold
+                                      d-block
+                                      text-truncate"
+
+                               th:text="${productNameNode.asText()}">
+
+                                Product
+
+                            </a>
+
+
+                            <!-- Product name without link -->
+                            <span th:if="${productIdNode == null
+                                          and productNameNode != null}"
+
+                                  class="fw-semibold d-block text-truncate"
+
+                                  th:text="${productNameNode.asText()}">
+
+                                Product
+
+                            </span>
+
+
+                            <!-- Generic fallback -->
+                            <span th:if="${productNameNode == null}"
+
+                                  class="fw-semibold d-block text-truncate">
+
+                                Product
+
+                            </span>
+
+
+                            <!-- Brand / quantity -->
+                            <div class="small text-muted mt-1">
+
+
+                                <span th:if="${productBrandNode != null}"
+                                      th:text="${productBrandNode.asText()}">
+
+                                    Brand
+
+                                </span>
+
+
+                                <span th:if="${quantityNode != null}"
+                                      class="dot-separator">
+
+                                    Qty
+
+                                    <span th:text="${quantityNode.asText()}">
+                                        1
+                                    </span>
+
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- =================================================
+                             ITEM SUBTOTAL
+                             ================================================= -->
+                        <div class="text-end">
+
+
+                            <div th:if="${subtotalNode != null}"
+                                 class="fw-semibold text-nowrap">
+
+
+                                <span th:if="${currencyNode != null}"
+                                      th:text="${currencyNode.asText()}">
+
+                                    INR
+
+                                </span>
+
+
+                                <span th:if="${currencyNode == null}">
+                                    ₹
+                                </span>
+
+
+                                <span th:text="${subtotalNode.asText()}">
+                                    0.00
+                                </span>
+
+                            </div>
+
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- =================================================
+                         MORE ITEMS
+                         ================================================= -->
+                    <div th:if="${displayItemsNode.size() > 4}"
+                         class="small text-muted mt-2">
+
+                        <i class="bi bi-three-dots me-1"></i>
+
+                        <span th:text="${displayItemsNode.size() - 4}">
+                            1
+                        </span>
+
+                        more item(s)
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                     FALLBACK IF displayItems DOES NOT EXIST
+
+                     This prevents the page from becoming blank if
+                     the API only returns "items".
+                     ================================================= -->
+                <div th:if="${(displayItemsNode == null
+                              or !displayItemsNode.isArray()
+                              or displayItemsNode.size() == 0)
+                              and itemsNode != null
+                              and itemsNode.isArray()
+                              and itemsNode.size() > 0}"
+
+                     class="order-products">
+
+
+                    <div th:each="item, stat : ${itemsNode}"
+
+                         th:if="${stat.index < 4}"
+
+                         th:with="
+                            productIdNode=${item.get('productId')},
+                            productNameNode=${item.get('productName')},
+                            quantityNode=${item.get('quantity')},
+                            subtotalNode=${item.get('subtotal')}
+                         "
+
+                         class="order-product-row">
+
+
+                        <div class="order-product-thumb">
+
+                            <a th:if="${productIdNode != null}"
+                               th:href="@{/products/{id}(id=${productIdNode.asText()})}">
+
+                                <i class="bi bi-box"></i>
+
+                            </a>
+
+                            <span th:if="${productIdNode == null}">
+                                <i class="bi bi-box"></i>
+                            </span>
+
+                        </div>
+
+
+                        <div class="flex-grow-1 min-width-0">
+
+                            <a th:if="${productIdNode != null
+                                       and productNameNode != null}"
+
+                               th:href="@{/products/{id}(id=${productIdNode.asText()})}"
+
+                               class="text-decoration-none
+                                      text-dark
+                                      fw-semibold
+                                      d-block
+                                      text-truncate"
+
+                               th:text="${productNameNode.asText()}">
+
+                                Product
+
+                            </a>
+
+
+                            <span th:if="${productIdNode == null
+                                          and productNameNode != null}"
+
+                                  class="fw-semibold d-block text-truncate"
+
+                                  th:text="${productNameNode.asText()}">
+
+                                Product
+
+                            </span>
+
+
+                            <span th:if="${productNameNode == null}"
+                                  class="fw-semibold d-block text-truncate">
+
+                                Product
+
+                            </span>
+
+
+                            <div class="small text-muted mt-1">
+
+                                <span th:if="${quantityNode != null}">
+
+                                    Qty
+
+                                    <span th:text="${quantityNode.asText()}">
+                                        1
+                                    </span>
+
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="text-end">
+
+                            <div th:if="${subtotalNode != null}"
+                                 class="fw-semibold text-nowrap">
+
+                                <span th:if="${currencyNode != null}"
+                                      th:text="${currencyNode.asText()}">
+                                    INR
+                                </span>
+
+                                <span th:if="${currencyNode == null}">
+                                    ₹
+                                </span>
+
+                                <span th:text="${subtotalNode.asText()}">
+                                    0.00
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                     ORDER TOTAL / ACTION
+                     ================================================= -->
+                <div class="order-footer
+                            mt-4
+                            pt-3
+                            border-top
+                            d-flex
+                            justify-content-between
+                            align-items-center
+                            flex-wrap
+                            gap-3">
+
+
+                    <!-- TOTAL -->
+                    <div>
+
+                        <span class="small text-muted">
+                            Order total
+                        </span>
+
+
+                        <div class="fw-bold fs-5">
+
+
+                            <!-- Currency -->
+                            <span th:if="${currencyNode != null}"
+                                  th:text="${currencyNode.asText()}">
+
+                                INR
+
+                            </span>
+
+
+                            <span th:if="${currencyNode == null}">
+                                INR
+                            </span>
+
+
+                            <!-- totalAmount -->
+                            <span th:if="${totalAmountNode != null}"
+                                  th:text="${totalAmountNode.asText()}">
+
+                                0.00
+
+                            </span>
+
+
+                            <!-- total fallback -->
+                            <span th:if="${totalAmountNode == null
+                                          and totalNode != null}"
+
+                                  th:text="${totalNode.asText()}">
+
+                                0.00
+
+                            </span>
+
+
+                            <!-- no total -->
+                            <span th:if="${totalAmountNode == null
+                                          and totalNode == null}">
+
+                                0.00
+
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- =================================================
+                         VIEW ORDER
+                         ================================================= -->
+
+                    <a th:if="${orderIdNode != null}"
+
+                       th:href="@{/orders/{id}(id=${orderIdNode.asText()})}"
+
+                       class="btn btn-outline-primary">
+
+                        View order
+
+                        <i class="bi bi-arrow-right ms-1"></i>
+
+                    </a>
+
+
+                    <a th:if="${orderIdNode == null
+                               and idNode != null}"
+
+                       th:href="@{/orders/{id}(id=${idNode.asText()})}"
+
+                       class="btn btn-outline-primary">
+
+                        View order
+
+                        <i class="bi bi-arrow-right ms-1"></i>
+
+                    </a>
+
+                </div>
+
+            </div>
+
+        </article>
+
+    </div>
+
+</main>
+
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+</body>
+</html>
